@@ -1,0 +1,19 @@
+[project]
+name = "idea-enhancer"
+version = "0.1.0"
+description = "Enhance raw ideas with grounded research and multi-persona critique."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "anthropic>=0.40.0",
+]
+
+[project.scripts]
+enhance = "idea_enhancer.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
