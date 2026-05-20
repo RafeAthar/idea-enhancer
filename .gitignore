@@ -30,3 +30,16 @@ ideas/*.md
 # OS
 .DS_Store
 Thumbs.db
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/dev.log
+frontend/db/
+frontend/agent-ctx/
+frontend/download/
+frontend/upload/
+frontend/.zscripts/
+frontend/mini-services/
+frontend/prisma/*.db
+frontend/prisma/*.db-journal
