@@ -1,16 +1,31 @@
 from __future__ import annotations
 
+import logging
 import re
 
 from idea_enhancer.client import call
 from idea_enhancer.models import DecisionArtifact, Scores
 from idea_enhancer.prompts import DECISION_SYSTEM, decision_user
 
+logger = logging.getLogger("idea_enhancer")
+
 SCORE_LINE_RE = re.compile(r"^-\s*([A-Za-z][A-Za-z\s\-/]*?):\s*(\d{1,2})", re.MULTILINE)
 RECOMMENDATION_RE = re.compile(
     r"Recommendation:\s*(kill|explore|build)\s*[\.\-:]?\s*(.*)",
     re.IGNORECASE,
 )
+
+# Mapping from normalized label → Scores field and human-readable name.
+_SCORE_FIELDS: dict[str, tuple[str, str]] = {
+    "tam": ("tam", "TAM"),
+    "competitive density": ("competitive_density", "Competitive density"),
+    "moat": ("moat", "Moat"),
+    "founder-fit": ("founder_fit", "Founder-fit"),
+    "founder fit": ("founder_fit", "Founder-fit"),
+    "why-now timing": ("why_now", "Why-now timing"),
+    "why-now": ("why_now", "Why-now timing"),
+    "capital efficiency": ("capital_efficiency", "Capital efficiency"),
+}
 
 
 def _section(text: str, header: str) -> str:
@@ -31,13 +46,34 @@ def _parse_scores(scores_block: str) -> Scores:
         except ValueError:
             continue
         found[label] = val
+
+    # Build Scores with explicit per-field lookup + warning for defaults.
+    field_values: dict[str, int] = {}
+    for label, (field_name, display_name) in _SCORE_FIELDS.items():
+        if label in found:
+            field_values[field_name] = found[label]
+
+    # Warn about any dimension that wasn't parsed (will use default 5).
+    parsed_fields = set(field_values.keys())
+    all_fields = {v[0] for v in _SCORE_FIELDS.values()}
+    missing = all_fields - parsed_fields
+    if missing:
+        missing_names = sorted(
+            {v[1] for v in _SCORE_FIELDS.values() if v[0] in missing}
+        )
+        logger.warning(
+            "Decision parser: could not parse scores for %s — defaulting to 5/10. "
+            "LLM output may have deviated from expected format.",
+            ", ".join(missing_names),
+        )
+
     return Scores(
-        tam=found.get("tam", 5),
-        competitive_density=found.get("competitive density", 5),
-        moat=found.get("moat", 5),
-        founder_fit=found.get("founder-fit", found.get("founder fit", 5)),
-        why_now=found.get("why-now timing", found.get("why-now", 5)),
-        capital_efficiency=found.get("capital efficiency", 5),
+        tam=field_values.get("tam", 5),
+        competitive_density=field_values.get("competitive_density", 5),
+        moat=field_values.get("moat", 5),
+        founder_fit=field_values.get("founder_fit", 5),
+        why_now=field_values.get("why_now", 5),
+        capital_efficiency=field_values.get("capital_efficiency", 5),
     )
 
 

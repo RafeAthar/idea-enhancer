@@ -1,27 +1,32 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
 .venv/
 venv/
 env/
-*.egg-info/
-*.egg
-dist/
-build/
-.env
-.env.*
-!.env.example
 
-ideas/*
+# Environment variables
+.env
+
+# Generated idea reports
+ideas/*.md
 !ideas/.gitkeep
 
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-
-.vscode/
+# IDE
 .idea/
+.vscode/
 *.swp
+*.swo
+*~
+
+# OS
 .DS_Store
+Thumbs.db

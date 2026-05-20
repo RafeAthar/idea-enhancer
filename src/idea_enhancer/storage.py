@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from datetime import date, datetime
 from pathlib import Path
@@ -12,7 +13,11 @@ from idea_enhancer.models import (
     Scores,
 )
 
-IDEAS_DIR = Path("ideas")
+logger = logging.getLogger("idea_enhancer")
+
+# Use project-root relative path when possible, fall back to CWD-relative.
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]  # src/idea_enhancer/ → repo root
+IDEAS_DIR = _PROJECT_ROOT / "ideas"
 
 
 def slugify(text: str, max_words: int = 6) -> str:
@@ -95,7 +100,7 @@ def render_report(report: Report) -> str:
     if decision:
         lines.append("## Decision artifact")
         lines.append("")
-        lines.append("### Scores (1–10)")
+        lines.append("### Scores (1-10)")
         lines.append("")
         s = decision.scores
         lines.append(f"- TAM: {s.tam}")
@@ -137,6 +142,9 @@ FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 
 
 def parse_frontmatter(markdown: str) -> dict[str, str]:
+    """Parse YAML-like frontmatter.  Uses ``partition`` so that values
+    containing colons (URLs, ISO timestamps, etc.) are preserved.
+    """
     m = FRONTMATTER_RE.match(markdown)
     if not m:
         return {}
